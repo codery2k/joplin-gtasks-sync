@@ -58,6 +58,10 @@ export class GoogleAuthClient {
 		return tokens.accessToken;
 	}
 
+	async isConnected(): Promise<boolean> {
+		return (await this.store.load()) !== null;
+	}
+
 	async connectedEmail(): Promise<string | null> {
 		const tokens = await this.store.load();
 		return tokens?.email ?? null;

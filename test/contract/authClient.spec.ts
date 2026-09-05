@@ -30,6 +30,36 @@ describe('GoogleAuthClient', () => {
 		expect(opened).toEqual([]);
 	});
 
+	it('reports connected only when tokens are stored', async () => {
+		let tokens: OAuthTokens | null = null;
+		const store: TokenStore = {
+			async load() {
+				return tokens;
+			},
+			async save(next) {
+				tokens = next;
+			},
+			async clear() {
+				tokens = null;
+			},
+		};
+
+		const client = new GoogleAuthClient({ clientId: 'id', clientSecret: 'secret' }, store, {
+			openUrl: async () => {},
+		});
+
+		await expect(client.isConnected()).resolves.toBe(false);
+
+		await store.save({
+			accessToken: 'tok',
+			expiresAt: Date.now() + 60_000,
+		});
+		await expect(client.isConnected()).resolves.toBe(true);
+
+		await store.clear();
+		await expect(client.isConnected()).resolves.toBe(false);
+	});
+
 	it('creates a PKCE verifier and S256 challenge', () => {
 		const { verifier, challenge } = pkce();
 		expect(verifier).toMatch(/^[A-Za-z0-9_-]+$/);
