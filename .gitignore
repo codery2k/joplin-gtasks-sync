@@ -1,0 +1,11 @@
+dist/
+node_modules/
+publish/
+*.jpl
+.env
+.env.*
+credentials.json
+client_secret*.json
+.DS_Store
+coverage/
+.vitest/
