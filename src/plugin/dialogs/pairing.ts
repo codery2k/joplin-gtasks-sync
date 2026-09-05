@@ -6,7 +6,7 @@ export async function pickPairing(args: {
 	folders: FolderInfo[];
 	lists: GoogleTaskList[];
 }): Promise<{ folderId: string; listId: string; listTitle: string } | null> {
-	const handle = await joplin.views.dialogs.create('gtasksPairingDialog');
+	const handle = await joplin.views.dialogs.create(`gtasksPairingDialog-${Date.now()}`);
 	const folderOptions = args.folders
 		.map((folder) => `<option value="${escapeHtml(folder.id)}">${escapeHtml(folder.title)}</option>`)
 		.join('');

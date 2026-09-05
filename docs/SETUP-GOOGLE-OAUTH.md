@@ -9,13 +9,12 @@ The plugin uses one auth flow: Settings → *Authenticate* → system browser �
 1. Open [Google Cloud Console](https://console.cloud.google.com/).
 2. Create or pick a project.
 3. Enable the **Google Tasks API**.
-4. APIs & Services → OAuth consent screen.
-   - User type: **External** (or Internal if this is a Workspace-only install).
-   - App name, support email, developer contact.
-   - Scope: `https://www.googleapis.com/auth/tasks`.
-   - Add your Google account as a test user while the app is in Testing.
-5. APIs & Services → Credentials → Create credentials → OAuth client ID.
-   - Application type: **Desktop app**.
+4. Google Auth Platform (or APIs & Services → OAuth consent screen):
+   - **Audience**: External (or Internal if this is a Workspace-only install). While the app is in Testing, add your Google account as a **test user**. Sensitive scopes like Tasks are not granted unless you are on that list.
+   - **Data Access**: add `https://www.googleapis.com/auth/tasks` (shown as `.../auth/tasks`).
+   - **Branding**: app name, support email, developer contact.
+5. **Clients** → Create client.
+   - Application type: **Desktop app** (not Web application).
    - Name it e.g. `Joplin Google Tasks Sync`.
 6. Copy the client ID and client secret.
 

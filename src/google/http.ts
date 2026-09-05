@@ -23,6 +23,29 @@ export class HttpError extends Error {
 	}
 }
 
+export function describeError(error: unknown): string {
+	if (error instanceof HttpError) {
+		const detail = googleErrorDetail(error.body);
+		return detail ? `${error.message} — ${detail}` : error.message;
+	}
+	if (error instanceof Error) return error.message;
+	return String(error);
+}
+
+function googleErrorDetail(body: string): string | undefined {
+	if (!body) return undefined;
+	try {
+		const parsed = JSON.parse(body) as {
+			error?: { message?: string } | string;
+			error_description?: string;
+		};
+		if (typeof parsed.error === 'string') return parsed.error_description ?? parsed.error;
+		return parsed.error?.message ?? parsed.error_description;
+	} catch {
+		return body;
+	}
+}
+
 const RETRYABLE = new Set([429, 500, 502, 503, 504]);
 
 export async function requestWithBackoff(

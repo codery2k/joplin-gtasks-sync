@@ -17,6 +17,8 @@ export type OAuthConfig = {
 	clientSecret?: string;
 };
 
+export type OAuthConfigSource = OAuthConfig | (() => Promise<OAuthConfig> | OAuthConfig);
+
 export interface TokenStore {
 	load(): Promise<OAuthTokens | null>;
 	save(tokens: OAuthTokens): Promise<void>;
@@ -33,12 +35,23 @@ const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
 
+const MISSING_CLIENT_ID =
+	'Google OAuth client ID is not set. Open Settings → Google Tasks Sync and paste a Desktop client ID and secret.';
+
 export class GoogleAuthClient {
 	constructor(
-		private readonly config: OAuthConfig,
+		private readonly configSource: OAuthConfigSource,
 		private readonly store: TokenStore,
 		private readonly deps: AuthDeps,
 	) {}
+
+	private async resolveConfig(): Promise<OAuthConfig> {
+		const config = typeof this.configSource === 'function' ? await this.configSource() : this.configSource;
+		if (!config.clientId.trim()) {
+			throw new Error(MISSING_CLIENT_ID);
+		}
+		return { ...config, clientSecret: config.clientSecret || undefined };
+	}
 
 	async getAccessToken(): Promise<string> {
 		const tokens = await this.ensureTokens();
@@ -51,15 +64,16 @@ export class GoogleAuthClient {
 	}
 
 	async authenticate(): Promise<OAuthTokens> {
+		const config = await this.resolveConfig();
 		const { verifier, challenge } = pkce();
 		const { port, waitForCode, close } = await listenForRedirect();
 		const redirectUri = `http://127.0.0.1:${port}/`;
 		const state = randomBytes(16).toString('hex');
 		const url = new URL(AUTH_URL);
-		url.searchParams.set('client_id', this.config.clientId);
+		url.searchParams.set('client_id', config.clientId);
 		url.searchParams.set('redirect_uri', redirectUri);
 		url.searchParams.set('response_type', 'code');
-		url.searchParams.set('scope', `${TASKS_SCOPE} ${USERINFO_SCOPE}`);
+		url.searchParams.set('scope', TASKS_SCOPE);
 		url.searchParams.set('code_challenge', challenge);
 		url.searchParams.set('code_challenge_method', 'S256');
 		url.searchParams.set('state', state);
@@ -72,7 +86,7 @@ export class GoogleAuthClient {
 			if (returnedState !== state) {
 				throw new Error('OAuth state mismatch');
 			}
-			const tokens = await this.exchangeCode(code, redirectUri, verifier);
+			const tokens = await this.exchangeCode(config, code, redirectUri, verifier);
 			await this.store.save(tokens);
 			return tokens;
 		} finally {
@@ -96,7 +110,7 @@ export class GoogleAuthClient {
 		if (!existing.refreshToken) {
 			throw new Error('Google access token expired and no refresh token is stored');
 		}
-		const refreshed = await this.refresh(existing.refreshToken, existing.email);
+		const refreshed = await this.refresh(await this.resolveConfig(), existing.refreshToken, existing.email);
 		const merged: OAuthTokens = {
 			...existing,
 			...refreshed,
@@ -106,25 +120,30 @@ export class GoogleAuthClient {
 		return merged;
 	}
 
-	private async exchangeCode(code: string, redirectUri: string, verifier: string): Promise<OAuthTokens> {
+	private async exchangeCode(
+		config: OAuthConfig,
+		code: string,
+		redirectUri: string,
+		verifier: string,
+	): Promise<OAuthTokens> {
 		const body = new URLSearchParams({
-			client_id: this.config.clientId,
+			client_id: config.clientId,
 			code,
 			code_verifier: verifier,
 			grant_type: 'authorization_code',
 			redirect_uri: redirectUri,
 		});
-		if (this.config.clientSecret) body.set('client_secret', this.config.clientSecret);
+		if (config.clientSecret) body.set('client_secret', config.clientSecret);
 		return this.tokenRequest(body);
 	}
 
-	private async refresh(refreshToken: string, email?: string): Promise<OAuthTokens> {
+	private async refresh(config: OAuthConfig, refreshToken: string, email?: string): Promise<OAuthTokens> {
 		const body = new URLSearchParams({
-			client_id: this.config.clientId,
+			client_id: config.clientId,
 			grant_type: 'refresh_token',
 			refresh_token: refreshToken,
 		});
-		if (this.config.clientSecret) body.set('client_secret', this.config.clientSecret);
+		if (config.clientSecret) body.set('client_secret', config.clientSecret);
 		const tokens = await this.tokenRequest(body);
 		return { ...tokens, email: tokens.email ?? email };
 	}

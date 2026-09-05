@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HttpError, requestWithBackoff } from '../../src/google/http';
+import { HttpError, describeError, requestWithBackoff } from '../../src/google/http';
 
 describe('http backoff', () => {
 	it('retries 429 and 5xx then returns the successful body', async () => {
@@ -41,5 +41,22 @@ describe('http backoff', () => {
 				},
 			),
 		).rejects.toBeInstanceOf(HttpError);
+	});
+
+	it('surfaces the Google error message from an HTTP body', () => {
+		const error = new HttpError(
+			'HTTP 403 GET https://tasks.googleapis.com/tasks/v1/users/@me/lists',
+			403,
+			JSON.stringify({
+				error: { message: 'Google Tasks API has not been used in project 123 before or it is disabled.' },
+			}),
+		);
+		expect(describeError(error)).toContain('Google Tasks API has not been used');
+	});
+
+	it('passes through a plain Error message', () => {
+		expect(describeError(new Error('Not authenticated with Google Tasks'))).toBe(
+			'Not authenticated with Google Tasks',
+		);
 	});
 });

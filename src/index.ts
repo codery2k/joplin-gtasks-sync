@@ -22,13 +22,11 @@ joplin.plugins.register({
 		const tokenStore = new SettingsTokenStore();
 		const clock = { now: () => Date.now() };
 
-		const clientId = (await settingString(SettingKey.clientId)) || BUNDLED_CLIENT_ID;
-		const clientSecret = (await settingString(SettingKey.clientSecret)) || BUNDLED_CLIENT_SECRET;
-		const auth = new GoogleAuthClient(
-			{ clientId, clientSecret: clientSecret || undefined },
-			tokenStore,
-			{ openUrl: openExternalUrl },
-		);
+		const loadOauthConfig = async () => ({
+			clientId: (await settingString(SettingKey.clientId)) || BUNDLED_CLIENT_ID,
+			clientSecret: (await settingString(SettingKey.clientSecret)) || BUNDLED_CLIENT_SECRET || undefined,
+		});
+		const auth = new GoogleAuthClient(loadOauthConfig, tokenStore, { openUrl: openExternalUrl });
 		const googleSide = new GoogleTasksClient(auth);
 		const sync = new SyncService(joplinSide, googleSide, links, clock, logger);
 		const scheduler = new Scheduler(sync, logger);

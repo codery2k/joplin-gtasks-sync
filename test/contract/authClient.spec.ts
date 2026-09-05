@@ -10,6 +10,26 @@ describe('GoogleAuthClient', () => {
 	afterEach(() => server.resetHandlers());
 	afterAll(() => server.close());
 
+	it('refuses to start OAuth when client ID is missing', async () => {
+		const opened: string[] = [];
+		const store: TokenStore = {
+			async load() {
+				return null;
+			},
+			async save() {},
+			async clear() {},
+		};
+
+		const client = new GoogleAuthClient({ clientId: '', clientSecret: '' }, store, {
+			openUrl: async (url) => {
+				opened.push(url);
+			},
+		});
+
+		await expect(client.authenticate()).rejects.toThrow(/client ID/i);
+		expect(opened).toEqual([]);
+	});
+
 	it('creates a PKCE verifier and S256 challenge', () => {
 		const { verifier, challenge } = pkce();
 		expect(verifier).toMatch(/^[A-Za-z0-9_-]+$/);

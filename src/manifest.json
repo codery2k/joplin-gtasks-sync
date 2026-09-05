@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "id": "com.codery2k.JoplinGTasksSync",
-  "app_min_version": "3.7",
+  "app_min_version": "3.6.0",
   "version": "1.0.0",
   "name": "Google Tasks Sync",
   "description": "Two-way sync between a Joplin notebook and a Google Tasks list",
