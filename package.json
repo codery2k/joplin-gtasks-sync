@@ -1,0 +1,40 @@
+{
+  "name": "joplin-plugin-gtasks-sync",
+  "version": "1.0.0",
+  "description": "Two-way sync between a Joplin notebook and a Google Tasks list",
+  "author": "Saurabh Miglani",
+  "homepage": "https://github.com/codery2k/joplin-gtasks-sync",
+  "scripts": {
+    "dist": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
+    "prepare": "npm run dist",
+    "updateVersion": "webpack --env joplin-plugin-config=updateVersion",
+    "update": "npm install -g generator-joplin && yo joplin --node-package-manager npm --update --force",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint . && tsc --noEmit"
+  },
+  "license": "MIT",
+  "keywords": [
+    "joplin-plugin"
+  ],
+  "files": [
+    "publish"
+  ],
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^18.7.13",
+    "chalk": "^4.1.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^9.15.0",
+    "fs-extra": "^10.1.0",
+    "glob": "^8.0.3",
+    "msw": "^2.7.0",
+    "tar": "^6.1.11",
+    "ts-loader": "^9.3.1",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.15.0",
+    "vitest": "^2.1.5",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  }
+}

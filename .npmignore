@@ -1,0 +1,14 @@
+*.md
+!README.md
+/*.jpl
+/api
+/src
+/dist
+/test
+/docs
+tsconfig.json
+webpack.config.js
+eslint.config.mjs
+vitest.config.ts
+CLAUDE.md
+AGENTS.md
