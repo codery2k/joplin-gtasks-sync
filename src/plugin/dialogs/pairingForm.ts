@@ -77,6 +77,11 @@ export function pairingFormHtml(args: { folders: FolderInfo[]; lists: GoogleTask
 		<div class="pairing-shell">
 		<form name="pair" class="pairing-form">
 			<p class="lead">Pair a Joplin notebook with a Google Tasks list.</p>
+			<label class="check-row">
+				<input type="checkbox" name="createAll" value="1">
+				Create new notebooks for all Google Tasks lists
+			</label>
+			<p class="hint">One notebook per list, named after the list. Existing pairings are left as-is.</p>
 			<div class="single">
 				<label class="field">Google Tasks list
 					<select name="listId">${listOptions}</select>
@@ -95,11 +100,6 @@ export function pairingFormHtml(args: { folders: FolderInfo[]; lists: GoogleTask
 				</label>`
 				}
 			</div>
-			<label class="check-row">
-				<input type="checkbox" name="createAll" value="1">
-				Create new notebooks for all Google Tasks lists
-			</label>
-			<p class="hint">One notebook per list, named after the list. Existing pairings are left as-is.</p>
 		</form>
 		</div>`;
 }

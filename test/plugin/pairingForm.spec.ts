@@ -19,11 +19,14 @@ describe('pairingFormHtml', () => {
 		expect(folderPos).toBeGreaterThan(listPos);
 	});
 
-	it('offers a create-new-notebook toggle and a create-all option', () => {
+	it('offers a create-new-notebook toggle and puts create-all at the top', () => {
 		expect(html).toMatch(/name="createNew"/);
 		expect(html).toMatch(/Create a new notebook/);
-		expect(html).toMatch(/name="createAll"/);
 		expect(html).toMatch(/all Google Tasks lists/);
+		const allPos = html.indexOf('name="createAll"');
+		const listPos = html.indexOf('name="listId"');
+		expect(allPos).toBeGreaterThan(-1);
+		expect(allPos).toBeLessThan(listPos);
 	});
 
 	it('styles dropdowns with Joplin theme colors instead of native light controls', () => {
