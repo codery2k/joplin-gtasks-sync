@@ -85,7 +85,9 @@ export function plan(args: {
 				taskId: task.id,
 				task: agreed,
 				fields: merged.localWins,
-				etag: link.googleEtag,
+				// The task we just read carries the current etag; the stored one is
+				// stale the moment anyone else touches the task.
+				etag: task.etag ?? link.googleEtag,
 				truncations,
 			});
 		}
@@ -98,6 +100,9 @@ export function plan(args: {
 				task: agreed,
 				fields: merged.remoteWins,
 				localDueMs,
+				googleUpdated: task.updated,
+				googleEtag: task.etag,
+				googleParent: task.parent,
 			});
 		}
 

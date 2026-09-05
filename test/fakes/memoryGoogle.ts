@@ -142,7 +142,8 @@ export class InMemoryGoogleTasks implements GoogleSide {
 				: undefined,
 			hidden: completed || task.hidden,
 			updated: task.updated,
-			etag: task.etag ?? this.nextEtag(),
+			// Every mutation gets a fresh etag, the way the real API behaves.
+			etag: this.nextEtag(),
 		};
 	}
 }

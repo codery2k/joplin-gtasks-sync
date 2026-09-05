@@ -118,6 +118,9 @@ export type UpdateLocalOp = {
 	task: CanonicalTask;
 	fields: CanonicalField[];
 	localDueMs: number | null;
+	googleUpdated: string;
+	googleEtag?: string;
+	googleParent?: string;
 };
 
 export type UpdateRemoteOp = {

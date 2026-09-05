@@ -33,6 +33,9 @@ export type ApplyResult =
 			base: CanonicalTask;
 			localDueMs: number | null;
 			joplinUpdatedTime: number;
+			googleUpdated: string;
+			googleEtag?: string;
+			googleParent?: string;
 	  }
 	| {
 			kind: 'updatedRemote';

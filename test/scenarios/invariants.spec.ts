@@ -103,6 +103,34 @@ describe('sync invariants', () => {
 		expect(remotesAfter[0]?.notes).toBe('local body');
 	});
 
+	it('can still push a local edit after pulling a remote one', async () => {
+		const { clock, joplin, google } = world();
+		const seeded = await seedLinked(clock, joplin, google);
+
+		clock.set(clock.now() + 10_000);
+		const remote = (await google.listTasks('list', { showCompleted: true, showHidden: true }))[0]!;
+		google.addTask('list', {
+			...remote,
+			notes: 'skim',
+			updated: new Date(clock.now()).toISOString(),
+		});
+		const pull = await runSync({ pair, joplin, google, links: seeded.links, clock });
+		expect(pull.plan.ops.map((op) => op.type)).toEqual(['UpdateLocal']);
+
+		clock.set(clock.now() + 10_000);
+		const local = joplin.notes.get(seeded.noteId)!;
+		joplin.notes.set(seeded.noteId, { ...local, title: 'Buy oat milk', updatedTime: clock.now() });
+
+		const push = await runSync({ pair, joplin, google, links: pull.links, clock });
+		expect(push.plan.ops.map((op) => op.type)).toEqual(['UpdateRemote']);
+		expect((await google.listTasks('list', { showCompleted: true, showHidden: true }))[0]?.title).toBe(
+			'Buy oat milk',
+		);
+
+		const quiet = await runSync({ pair, joplin, google, links: push.links, clock });
+		expect(quiet.plan.ops).toEqual([]);
+	});
+
 	it('converges after a todo is completed locally', async () => {
 		const { clock, joplin, google } = world();
 		const seeded = await seedLinked(clock, joplin, google);

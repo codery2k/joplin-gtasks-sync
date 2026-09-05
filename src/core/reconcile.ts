@@ -59,11 +59,11 @@ export function reconcile(links: LinkState[], results: ApplyResult[]): LinkState
 				};
 				if (result.kind === 'updatedLocal') {
 					merged.joplinUpdatedTime = result.joplinUpdatedTime;
-				} else {
-					merged.googleUpdated = result.googleUpdated;
-					merged.googleEtag = result.googleEtag;
-					merged.googleParent = result.googleParent;
 				}
+				// Both directions observed the remote task, so both refresh it.
+				merged.googleUpdated = result.googleUpdated;
+				merged.googleEtag = result.googleEtag;
+				merged.googleParent = result.googleParent;
 				next.set(linkKey(merged.noteId, merged.taskId), merged);
 				break;
 			}

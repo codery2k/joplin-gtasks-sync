@@ -96,6 +96,9 @@ async function applyOp(op: Op, args: ExecuteArgs): Promise<ApplyResult> {
 				base: noteToCanonical(updated),
 				localDueMs: updated.todoDue,
 				joplinUpdatedTime: updated.updatedTime,
+				googleUpdated: op.googleUpdated,
+				googleEtag: op.googleEtag,
+				googleParent: op.googleParent,
 			};
 		}
 		case 'UpdateRemote': {
