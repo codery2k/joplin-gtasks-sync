@@ -4,8 +4,8 @@ import { GoogleAuthClient } from '../google/authClient';
 import { GoogleSide, JoplinSide, Logger } from '../ports';
 import { describeError } from '../google/http';
 import { googleTasksMenuCommands } from './authMenu';
-import { applyPairing } from './applyPairing';
 import { pickPairing } from './dialogs/pairing';
+import { describePairThenSync, pairThenSync } from './pairThenSync';
 import { explainPairingError } from './errors';
 import { LinkStore } from './linkStore';
 import { SettingKey } from './settings';
@@ -80,17 +80,14 @@ export async function registerCommands(args: {
 				}
 				const request = await pickPairing({ folders, lists });
 				if (!request) return;
-				const applied = await applyPairing({
+				const { applied, summary } = await pairThenSync({
 					request,
 					lists,
 					joplin: args.joplinSide,
 					store: args.links,
+					sync: args.sync,
 				});
-				const detail =
-					applied.pairs.length === 1
-						? `Paired notebook with ${applied.pairs[0].listTitle}`
-						: `Paired ${applied.pairs.length} notebook(s).`;
-				await joplin.views.dialogs.showMessageBox(detail);
+				await joplin.views.dialogs.showMessageBox(describePairThenSync(applied, summary));
 			} catch (error) {
 				const message = describeError(error);
 				args.logger.error('pair failed', { message });
