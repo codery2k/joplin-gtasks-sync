@@ -71,15 +71,25 @@ export class SyncService {
 			links: existing,
 			now: this.clock.now(),
 		});
-		const results = await executePlan({
+		const outcome = await executePlan({
 			pair,
 			plan: syncPlan,
 			joplin: this.joplinSide,
 			google: this.googleSide,
 			clock: this.clock,
 		});
-		const next = reconcile(existing, results);
+		// Persist what did land before surfacing the failure: an applied op with
+		// no stored link would be re-applied as a duplicate on the next run.
+		const next = reconcile(existing, outcome.results);
 		await this.links.saveLinks(pair.folderId, pair.listId, next);
+		if (outcome.failure) {
+			this.logger.error('sync stopped part-way through a plan', {
+				op: outcome.failure.op.type,
+				applied: outcome.results.length,
+				planned: syncPlan.ops.length,
+			});
+			throw outcome.failure.error;
+		}
 		return syncPlan.ops.length;
 	}
 }

@@ -1,7 +1,7 @@
 import { plan } from '../../src/core/planner';
 import { reconcile } from '../../src/core/reconcile';
 import { LinkState, Pairing, SyncPlan } from '../../src/core/model';
-import { executePlan } from '../../src/runtime/executor';
+import { ExecuteOutcome, executePlan } from '../../src/runtime/executor';
 import { Clock, GoogleSide, JoplinSide } from '../../src/ports';
 
 export async function runSync(args: {
@@ -11,7 +11,9 @@ export async function runSync(args: {
 	links: LinkState[];
 	clock: Clock;
 	showDeleted?: boolean;
-}): Promise<{ plan: SyncPlan; links: LinkState[] }> {
+	/** Return a mid-plan failure instead of throwing, so a test can inspect it. */
+	tolerateFailure?: boolean;
+}): Promise<{ plan: SyncPlan; links: LinkState[]; failure?: ExecuteOutcome['failure'] }> {
 	const localNotes = await args.joplin.listTodos(args.pair.folderId);
 	const remoteTasks = await args.google.listTasks(args.pair.listId, {
 		showCompleted: true,
@@ -25,12 +27,15 @@ export async function runSync(args: {
 		links: args.links,
 		now: args.clock.now(),
 	});
-	const results = await executePlan({
+	const outcome = await executePlan({
 		pair: args.pair,
 		plan: syncPlan,
 		joplin: args.joplin,
 		google: args.google,
 		clock: args.clock,
 	});
-	return { plan: syncPlan, links: reconcile(args.links, results) };
+	// Mirror syncService: reconcile what landed, then surface the failure.
+	const links = reconcile(args.links, outcome.results);
+	if (outcome.failure && !args.tolerateFailure) throw outcome.failure.error;
+	return { plan: syncPlan, links, failure: outcome.failure };
 }
