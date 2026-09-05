@@ -23,6 +23,12 @@ export class InMemoryJoplinSide implements JoplinSide {
 		return [...this.folders.values()];
 	}
 
+	async createFolder(title: string): Promise<FolderInfo> {
+		const folder: FolderInfo = { id: randomUUID().replaceAll('-', ''), title };
+		this.folders.set(folder.id, folder);
+		return { ...folder };
+	}
+
 	async listTodos(folderId: string): Promise<JoplinNote[]> {
 		return [...this.notes.values()].filter(
 			(note) => note.parentId === folderId && note.isTodo && !note.deletedTime,

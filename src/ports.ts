@@ -14,6 +14,7 @@ export type FolderInfo = {
 
 export interface JoplinSide {
 	listFolders(): Promise<FolderInfo[]>;
+	createFolder(title: string): Promise<FolderInfo>;
 	listTodos(folderId: string): Promise<JoplinNote[]>;
 	getNote(id: string): Promise<JoplinNote | null>;
 	createTodo(folderId: string, task: CanonicalTask, dueMs: number | null): Promise<JoplinNote>;

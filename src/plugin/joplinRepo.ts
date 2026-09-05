@@ -32,6 +32,14 @@ export class JoplinRepo implements JoplinSide {
 		return folders;
 	}
 
+	async createFolder(title: string): Promise<FolderInfo> {
+		const created = (await joplin.data.post(['folders'], null, { title })) as {
+			id: string;
+			title?: string;
+		};
+		return { id: created.id, title: created.title ?? title };
+	}
+
 	async listTodos(folderId: string): Promise<JoplinNote[]> {
 		const notes: JoplinNote[] = [];
 		let page = 1;

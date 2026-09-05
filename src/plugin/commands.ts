@@ -4,6 +4,7 @@ import { GoogleAuthClient } from '../google/authClient';
 import { GoogleSide, JoplinSide, Logger } from '../ports';
 import { describeError } from '../google/http';
 import { googleTasksMenuCommands } from './authMenu';
+import { applyPairing } from './applyPairing';
 import { pickPairing } from './dialogs/pairing';
 import { explainPairingError } from './errors';
 import { LinkStore } from './linkStore';
@@ -70,12 +71,6 @@ export async function registerCommands(args: {
 		execute: async () => {
 			try {
 				const folders = await args.joplinSide.listFolders();
-				if (!folders.length) {
-					await joplin.views.dialogs.showMessageBox(
-						'This profile has no notebooks. Create one, then pair again.',
-					);
-					return;
-				}
 				const lists = await args.googleSide.listTaskLists();
 				if (!lists.length) {
 					await joplin.views.dialogs.showMessageBox(
@@ -83,15 +78,19 @@ export async function registerCommands(args: {
 					);
 					return;
 				}
-				const picked = await pickPairing({ folders, lists });
-				if (!picked) return;
-				await args.links.setPairing(picked.folderId, {
-					v: 1,
-					listId: picked.listId,
-					listTitle: picked.listTitle,
-					links: (await args.links.getPairing(picked.folderId))?.links ?? [],
+				const request = await pickPairing({ folders, lists });
+				if (!request) return;
+				const applied = await applyPairing({
+					request,
+					lists,
+					joplin: args.joplinSide,
+					store: args.links,
 				});
-				await joplin.views.dialogs.showMessageBox(`Paired notebook with ${picked.listTitle}`);
+				const detail =
+					applied.pairs.length === 1
+						? `Paired notebook with ${applied.pairs[0].listTitle}`
+						: `Paired ${applied.pairs.length} notebook(s).`;
+				await joplin.views.dialogs.showMessageBox(detail);
 			} catch (error) {
 				const message = describeError(error);
 				args.logger.error('pair failed', { message });
