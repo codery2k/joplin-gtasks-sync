@@ -137,10 +137,19 @@ export class InMemoryGoogleTasks implements GoogleSide {
 			notes,
 			due,
 			status: completed ? 'completed' : 'needsAction',
-			completed: completed ? (task.completed ?? new Date(now).toISOString()) : undefined,
+			completed: completed
+				? toWholeSecond(task.completed ?? new Date(now).toISOString())
+				: undefined,
 			hidden: completed || task.hidden,
 			updated: task.updated,
 			etag: task.etag ?? this.nextEtag(),
 		};
 	}
+}
+
+// Google stores `completed` at whole-second precision; keep the fake honest.
+function toWholeSecond(iso: string): string {
+	const ms = Date.parse(iso);
+	if (Number.isNaN(ms)) return iso;
+	return new Date(Math.floor(ms / 1000) * 1000).toISOString();
 }

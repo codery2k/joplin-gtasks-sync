@@ -8,14 +8,24 @@ import {
 	TruncationReport,
 } from './model';
 
+/**
+ * Google Tasks stores `completed` at whole-second precision. Joplin's
+ * todoCompleted is milliseconds, so an un-normalised value would differ from
+ * whatever the server echoes back on every round and re-push forever. Drop the
+ * sub-second part at the canonical boundary so both sides agree.
+ */
+function toWholeSecondMs(ms: number): number {
+	return Math.floor(ms / 1000) * 1000;
+}
+
 export function noteToCanonical(note: JoplinNote): CanonicalTask {
-	const completed = note.todoCompleted !== null && note.todoCompleted > 0;
+	const completedAt = note.todoCompleted !== null && note.todoCompleted > 0 ? note.todoCompleted : null;
 	return {
 		title: note.title,
 		body: note.body,
 		due: note.todoDue !== null && note.todoDue > 0 ? msToPlainDate(note.todoDue) : null,
-		completed,
-		completedAt: completed ? note.todoCompleted : null,
+		completed: completedAt !== null,
+		completedAt: completedAt === null ? null : toWholeSecondMs(completedAt),
 	};
 }
 
@@ -38,7 +48,7 @@ export function taskToCanonical(task: GoogleTask): CanonicalTask {
 	let completedAt: number | null = null;
 	if (completed && task.completed) {
 		const parsed = Date.parse(task.completed);
-		completedAt = Number.isNaN(parsed) ? null : parsed;
+		completedAt = Number.isNaN(parsed) ? null : toWholeSecondMs(parsed);
 	}
 	return {
 		title: task.title ?? '',

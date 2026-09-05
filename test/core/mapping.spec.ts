@@ -22,6 +22,22 @@ const NOTE: JoplinNote = {
 };
 
 describe('mapping', () => {
+	it('normalises completion timestamps to whole seconds', () => {
+		// Google stores `completed` at second precision, so the canonical form must
+		// not carry milliseconds the wire format cannot round-trip.
+		const canonical = noteToCanonical({ ...NOTE, todoCompleted: 1_700_000_500_123 });
+		expect(canonical.completed).toBe(true);
+		expect(canonical.completedAt).toBe(1_700_000_500_000);
+
+		const fromTask = taskToCanonical({
+			id: 't1',
+			status: 'completed',
+			completed: '2023-11-14T22:21:40.123Z',
+			updated: '2023-11-14T22:21:40.000Z',
+		});
+		expect(fromTask.completedAt).toBe(Date.parse('2023-11-14T22:21:40.000Z'));
+	});
+
 	it('round-trips a representable note through canonical fields', () => {
 		const canonical = noteToCanonical(NOTE);
 		expect(canonical).toEqual({
