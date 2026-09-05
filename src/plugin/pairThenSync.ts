@@ -2,6 +2,7 @@ import { GoogleTaskList } from '../core/model';
 import { JoplinSide } from '../ports';
 import { AppliedPair, applyPairing, PairingStore } from './applyPairing';
 import { PairingRequest } from './dialogs/pairingForm';
+import { describeSyncSummary } from './errors';
 import { SyncSummary } from './syncService';
 
 export async function pairThenSync(args: {
@@ -29,5 +30,6 @@ export function describePairThenSync(
 		applied.pairs.length === 1
 			? `Paired notebook with ${applied.pairs[0].listTitle}.`
 			: `Paired ${applied.pairs.length} notebook(s).`;
-	return `${paired} Sync finished: ${summary.ops} operation(s) across ${summary.pairs} pair(s).`;
+	const sync = describeSyncSummary(summary);
+	return sync.startsWith('Sync finished:') ? `${paired} ${sync}` : `${paired}\n\n${sync}`;
 }

@@ -1,8 +1,8 @@
 import { canonicalToGoogleFields, taskToCanonical } from '../core/mapping';
 import { CanonicalTask, GoogleTask, GoogleTaskList } from '../core/model';
-import { GoogleSide, ListTasksOpts } from '../ports';
+import { GoogleSide, ListTasksOpts, TaskListNotFoundError } from '../ports';
 import { GoogleAuthClient } from './authClient';
-import { FetchLike, requestJson } from './http';
+import { FetchLike, HttpError, requestJson } from './http';
 
 const API = 'https://tasks.googleapis.com/tasks/v1';
 
@@ -41,18 +41,25 @@ export class GoogleTasksClient implements GoogleSide {
 	async listTasks(listId: string, opts: ListTasksOpts = {}): Promise<GoogleTask[]> {
 		const tasks: GoogleTask[] = [];
 		let pageToken: string | undefined;
-		do {
-			const url = new URL(`${API}/lists/${encodeURIComponent(listId)}/tasks`);
-			url.searchParams.set('maxResults', '100');
-			url.searchParams.set('showCompleted', String(opts.showCompleted ?? true));
-			url.searchParams.set('showDeleted', String(opts.showDeleted ?? true));
-			url.searchParams.set('showHidden', String(opts.showHidden ?? true));
-			if (opts.updatedMin) url.searchParams.set('updatedMin', opts.updatedMin);
-			if (pageToken) url.searchParams.set('pageToken', pageToken);
-			const page = await this.authed<TasksPage>(url.toString());
-			tasks.push(...(page.items ?? []));
-			pageToken = page.nextPageToken;
-		} while (pageToken);
+		try {
+			do {
+				const url = new URL(`${API}/lists/${encodeURIComponent(listId)}/tasks`);
+				url.searchParams.set('maxResults', '100');
+				url.searchParams.set('showCompleted', String(opts.showCompleted ?? true));
+				url.searchParams.set('showDeleted', String(opts.showDeleted ?? true));
+				url.searchParams.set('showHidden', String(opts.showHidden ?? true));
+				if (opts.updatedMin) url.searchParams.set('updatedMin', opts.updatedMin);
+				if (pageToken) url.searchParams.set('pageToken', pageToken);
+				const page = await this.authed<TasksPage>(url.toString());
+				tasks.push(...(page.items ?? []));
+				pageToken = page.nextPageToken;
+			} while (pageToken);
+		} catch (error) {
+			if (error instanceof HttpError && error.status === 404) {
+				throw new TaskListNotFoundError(listId);
+			}
+			throw error;
+		}
 		return tasks;
 	}
 

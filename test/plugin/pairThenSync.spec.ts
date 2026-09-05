@@ -29,7 +29,7 @@ describe('pairThenSync', () => {
 				order.push('sync');
 				const pairing = await store.getPairing('nb1');
 				expect(pairing?.listId).toBe('list-a');
-				return { pairs: 1, ops: 3 };
+				return { pairs: 1, ops: 3, removedPairings: [] };
 			},
 		};
 
@@ -47,7 +47,7 @@ describe('pairThenSync', () => {
 		});
 
 		expect(order).toEqual(['sync']);
-		expect(result.summary).toEqual({ pairs: 1, ops: 3 });
+		expect(result.summary).toEqual({ pairs: 1, ops: 3, removedPairings: [] });
 		expect(result.applied.pairs).toEqual([{ folderId: 'nb1', listTitle: 'Work' }]);
 	});
 
@@ -58,7 +58,7 @@ describe('pairThenSync', () => {
 		const sync = {
 			async syncAll(): Promise<SyncSummary> {
 				synced = true;
-				return { pairs: 0, ops: 0 };
+				return { pairs: 0, ops: 0, removedPairings: [] };
 			},
 		};
 
@@ -89,7 +89,7 @@ describe('describePairThenSync', () => {
 		expect(
 			describePairThenSync(
 				{ pairs: [{ folderId: 'nb1', listTitle: 'Work' }] },
-				{ pairs: 1, ops: 4 },
+				{ pairs: 1, ops: 4, removedPairings: [] },
 			),
 		).toBe('Paired notebook with Work. Sync finished: 4 operation(s) across 1 pair(s).');
 	});

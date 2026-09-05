@@ -3,6 +3,7 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { GoogleAuthClient, TokenStore, OAuthTokens } from '../../src/google/authClient';
 import { GoogleTasksClient } from '../../src/google/tasksClient';
+import { TaskListNotFoundError } from '../../src/ports';
 
 const tokens: OAuthTokens = {
 	accessToken: 'access',
@@ -115,5 +116,16 @@ describe('GoogleTasksClient', () => {
 		);
 		await client.deleteTask('l1', 't9');
 		expect(calls).toEqual(['create', 'patch', 'delete']);
+	});
+
+	it('turns a 404 on list tasks into TaskListNotFoundError', async () => {
+		server.use(
+			http.get('https://tasks.googleapis.com/tasks/v1/lists/WWt3bk1fb09kcmFnMXY3Sw/tasks', () =>
+				HttpResponse.json({ error: { message: 'Task list not found.' } }, { status: 404 }),
+			),
+		);
+
+		const client = new GoogleTasksClient(auth);
+		await expect(client.listTasks('WWt3bk1fb09kcmFnMXY3Sw')).rejects.toBeInstanceOf(TaskListNotFoundError);
 	});
 });

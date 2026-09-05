@@ -31,6 +31,13 @@ export interface GoogleSide {
 	deleteTask(listId: string, taskId: string): Promise<void>;
 }
 
+export class TaskListNotFoundError extends Error {
+	constructor(readonly listId: string) {
+		super(`Google Tasks list was not found (${listId})`);
+		this.name = 'TaskListNotFoundError';
+	}
+}
+
 export interface Clock {
 	now(): number;
 }

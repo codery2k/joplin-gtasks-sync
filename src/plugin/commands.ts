@@ -6,7 +6,7 @@ import { describeError } from '../google/http';
 import { googleTasksMenuCommands } from './authMenu';
 import { pickPairing } from './dialogs/pairing';
 import { describePairThenSync, pairThenSync } from './pairThenSync';
-import { explainPairingError } from './errors';
+import { describeSyncSummary, explainPairingError } from './errors';
 import { LinkStore } from './linkStore';
 import { SettingKey } from './settings';
 import { SyncService } from './syncService';
@@ -105,11 +105,7 @@ export async function registerCommands(args: {
 			try {
 				const summary = await args.sync.syncAll();
 				args.logger.info('manual sync', summary);
-				const detail =
-					summary.pairs === 0
-						? 'Nothing to sync — pair a notebook first (Tools → Google Tasks → Pair notebook…).'
-						: `Sync finished: ${summary.ops} operation(s) across ${summary.pairs} pair(s).`;
-				await joplin.views.dialogs.showMessageBox(detail);
+				await joplin.views.dialogs.showMessageBox(describeSyncSummary(summary));
 			} catch (error) {
 				const message = describeError(error);
 				await joplin.views.dialogs.showMessageBox(message);

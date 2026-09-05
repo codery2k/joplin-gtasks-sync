@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { plainDateToGoogleDue } from '../../src/core/duedate';
 import { canonicalToGoogleFields } from '../../src/core/mapping';
 import { CanonicalTask, GOOGLE_NOTES_MAX, GOOGLE_TITLE_MAX, GoogleTask, GoogleTaskList } from '../../src/core/model';
-import { Clock, GoogleSide, ListTasksOpts } from '../../src/ports';
+import { Clock, GoogleSide, ListTasksOpts, TaskListNotFoundError } from '../../src/ports';
 
 export class InMemoryGoogleTasks implements GoogleSide {
 	lists = new Map<string, GoogleTaskList>();
@@ -27,6 +27,7 @@ export class InMemoryGoogleTasks implements GoogleSide {
 	}
 
 	async listTasks(listId: string, opts: ListTasksOpts = {}): Promise<GoogleTask[]> {
+		if (!this.lists.has(listId)) throw new TaskListNotFoundError(listId);
 		const showCompleted = opts.showCompleted ?? false;
 		const showDeleted = opts.showDeleted ?? false;
 		const showHidden = opts.showHidden ?? false;

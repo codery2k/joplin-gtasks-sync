@@ -28,7 +28,7 @@ joplin.plugins.register({
 		});
 		const auth = new GoogleAuthClient(loadOauthConfig, tokenStore, { openUrl: openExternalUrl });
 		const googleSide = new GoogleTasksClient(auth);
-		const sync = new SyncService(joplinSide, googleSide, links, clock, logger);
+		const sync = new SyncService(joplinSide, googleSide, links, clock, logger, joplin.settings);
 		const scheduler = new Scheduler(sync, logger);
 
 		await registerCommands({ auth, sync, joplinSide, googleSide, links, logger });
